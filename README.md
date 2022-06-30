@@ -1,5 +1,5 @@
 # OmniKeys
-Create shortcuts with any key combination possible. Prevent default events under condition, or stop shortcuts from running when `keydown` inputs text to the DOM.
+Create JavaScript keyboard shortcuts with any key combination possible. Prevent default events under condition, or stop shortcuts from running when `keydown` inputs text to the DOM.
 
 ## Setup
 Include `main.js` in your project
@@ -24,11 +24,11 @@ Shortcuts are defined as an array of objects. These objects currently accept 6 v
 * **hold** *required, but can be empty*
 	* Key(s) required to be held for the shortcut to fire
 	* **Type:** array of strings
-	* **Accepts:** unmodified, standard qwerty and special keys  (see more under **Standard QWERTY Input**)
+	* **Accepts:** unmodified, standard and special keys  (see more under **Standard Keyboard Input**)
 * **shortcut** *required*
 	* Key(s) typed while the set of `hold` keys are true (a hold key is not required, although shortcut keys are)
 	* **Type:** array of strings
-	* **Accepts:** unmodified, standard qwerty and special keys
+	* **Accepts:** unmodified, standard and special keys
 * **action** *required*
 	* Function to call when shortcut has completed
 	* **Type:** JavaScript function
@@ -43,13 +43,15 @@ Shortcuts are defined as an array of objects. These objects currently accept 6 v
 	* Include to allow this shortcut to fire even when its keystrokes affect the DOM
 	* **Type:** n/a, empty string used
 	
-## Standard QWERTY Input
+## Standard Keyboard Input
 Any unmodified key stroke from your keyboard can be used ***examples:*** `a` `b` `y` `;` `]` `=` `` ` `` `/`. Note that backslash is accepted `\`, but you will need to escape it within your arrays.
 An exception to this key stroke rule is the number pad, which you can find use cases for below.
 
 Here is a list of all special cases for specifying keys in your shortcuts:
 
-#### QWERTY Standards:
+*Note: OmniKeys uses the keyboards `Event.code` value, if you have a special key not found here, you can simply use that code in your shortcut or create a range / single use case under the OmniKeys `decodeTypeCode` method.*
+
+#### Keyboard Standards:
 * Space
 * Shift ~ split into left / right when `SHIFT_LR_SPECIFIC` is set to `true`
 	* ShiftLeft
@@ -63,7 +65,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 * Tab
 * CapsLock
 * Escape
-* F1 - F12
+* F1 - F20
 * Backspace
 * Enter
 * ContextMenu
@@ -113,7 +115,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	{
 		hold: ['Control','Shift','f'],
 		shortcut: ['.',';','\\',],
-		action: function () { console.log('I hope this isn\t one of your shortcuts') }
+		action: function () { console.log('I hope this isn\'t one of your shortcuts') }
 	}
 	`
 	
@@ -130,7 +132,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	`
 	
 ##### Type: /save
-*This uses `allowDuringInput` to accept the shortcut while the user is typing. If `preventDefaultAll` was used in conjunction, the event would fire but no text would be output to the active DOM element*
+*This uses `allowDuringInput` to accept the shortcut while the user is typing. If `preventDefaultAll` was used in conjunction, the event would fire but no text would be output to the active DOM element. Using `preventDefault` would only prevent the final character "e" from being input to the DOM element.*
 
 	`
 	{
