@@ -44,7 +44,7 @@ Shortcuts are defined as an array of objects. These objects currently accept 6 v
 	* **Type:** n/a, empty string used
 	
 ## Standard QWERTY Input
-Any unmodified key stroke from your keyboard can be used ***examples:*** `a` `b` `y` `;` `]` `=` ``` `/`. Note that backslash is accepted `\`, but you will need to escape it within your arrays.
+Any unmodified key stroke from your keyboard can be used ***examples:*** `a` `b` `y` `;` `]` `=` `` ` `` `/`. Note that backslash is accepted `\\`, but you will need to escape it within your arrays.
 An exception to this key stroke rule is the number pad, which you can find use cases for below.
 
 Here is a list of all special cases for specifying keys in your shortcuts:
