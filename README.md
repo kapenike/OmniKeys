@@ -44,7 +44,7 @@ Shortcuts are defined as an array of objects. These objects currently accept 6 v
 	* **Type:** n/a, empty string used
 	
 ## Standard QWERTY Input
-Any unmodified key stroke from your keyboard can be used ``***examples:*** a b y ; ] = ` /``. Note that backslash is accepted `\`, but you will need to escape it within your arrays.
+Any unmodified key stroke from your keyboard can be used ***examples:*** `a` `b` `y` `;` `]` `=` ````` `/`. Note that backslash is accepted `\`, but you will need to escape it within your arrays.
 An acception to this key stroke rule is the number pad, which you can find use cases for below.
 
 Here is a list of all special cases for specifying keys in your shortcuts:
@@ -52,14 +52,14 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 #### QWERTY Standards:
 * Space
 * Shift ~ split into left / right when `SHIFT_LR_SPECIFIC` is set to `true`
-	?- ShiftLeft
-	?- ShiftRight
+	* ShiftLeft
+	* ShiftRight
 * Control ~ split into left / right when `CTRL_LR_SPECIFIC` is set to `true`
-	?- ControlLeft
-	?- ControlRight
+	* ControlLeft
+	* ControlRight
 * Alt ~ split into left / right when `ALT_LR_SPECIFIC` is set to `true`
-	?- AltLeft
-	?- AltRight
+	* AltLeft
+	* AltRight
 * Tab
 * CapsLock
 * Escape
@@ -116,7 +116,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	`
 	
 ##### Hold: Ctrl, s + Type: m
-	*This requires `preventDefaultAll` to stop default save event from firing while the shortcut isn't complete*
+*This requires `preventDefaultAll` to stop default save event from firing while the shortcut isn't complete*
 	`
 	{
 		hold: ['Control','s'],
@@ -127,7 +127,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	`
 	
 ##### Type: /save
-	*This uses `allowDuringInput` to accept the shortcut while the user is typing. If `preventDefaultAll` was used in conjunction, the event would fire but no text would be output to the active DOM element*
+*This uses `allowDuringInput` to accept the shortcut while the user is typing. If `preventDefaultAll` was used in conjunction, the event would fire but no text would be output to the active DOM element*
 	`
 	{
 		hold: [],
@@ -139,8 +139,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	
 ## Bugs and ToDos
 Theres a few, but I'm tired. If anyone happens to stumble across this between now and tomorrow ... here's whats up:
-1. (Bug) Shortcuts are made to be stackable, so one shortcut can fire and then lead into another to fire. This also includes the options to prevent default events. There is currently a disconnect between hold keys and type keys in that, prevent defaults unrelated to another shortcut that start out in a similar hold key manner inherit this prevent default behavior. This has to do with partial matching.
-2. (Bug ... sorta) Type keys are converted to hold keys after the keydown event and removed when the keyup is fired. This all works great for hold keys but can bring an issue to the user when typing fast. When typing fast there is some overlap where two of these type keys are in keydown state at the same time. This creates a mismatch to the shortcut you're going for. Find some elegant way to detect when this occurs and keep type keys in the type queue ... this can't be done with `setTimout` or the script will lose access to its most valuable feature.
-3. (ToDo) Add `predictInput` feature. Detect if event target is a DOM input. This would allow a shortcut like `Ctrl + s` that doesn't have its default event stopped to run its shortcut code before the default action occurs. Currently the default is to run directly after the following DOM update, so the shortcut code will run after the default action.
-4. (ToDo) Add ability to restrict shortcut to only while users input is changing the DOM.
-5. (ToDo) So much more
+1. (Bug ... sorta) Type keys are converted to hold keys after the keydown event and removed when the keyup is fired. This all works great for hold keys but can bring an issue to the user when typing fast. When typing fast there is some overlap where two of these type keys are in keydown state at the same time. This creates a mismatch to the shortcut you're going for. Find some elegant way to detect when this occurs and keep type keys in the type queue ... this can't be done with `setTimout` or the script will lose access to its most valuable feature.
+2. (ToDo) Add `predictInput` feature. Detect if event target is a DOM input. This would allow a shortcut like `Ctrl + s` that doesn't have its default event stopped to run its shortcut code before the default action occurs. Currently the default is to run directly after the following DOM update, so the shortcut code will run after the default action.
+3. (ToDo) Add ability to restrict shortcut to only while users input is changing the DOM.
+4. (ToDo) So much more
