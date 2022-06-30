@@ -3,25 +3,7 @@ var SHIFT_LR_SPECIFIC = false // separate left and right shift (requiring ShiftL
 var CTRL_LR_SPECIFIC = false // etc
 var ALT_LR_SPECIFIC = false // etc
 
-var SHORTCUT_LIST = [
-	{
-		hold: ['Control'],
-		shortcut: ['s'],
-		action: function () { console.log('Save!') },
-	},
-	{
-		hold: ['Shift','Numpad1'],
-		shortcut: ['h'],
-		action: function () { console.log('shift d') },
-		preventDefaultAll:''
-	},
-	{
-		hold: ['Shift'],
-		shortcut: Array.from('/save'),
-		action: function () { console.log('muddled keys') },
-		allowDuringInput: ''
-	}
-]
+var SHORTCUT_LIST = []
 
 var OmniKeys = new function OmniKeysListener() {
 	this.hold_shortcut = null
@@ -75,18 +57,23 @@ var OmniKeys = new function OmniKeysListener() {
 		return a.length == 0 && b.length == 0
 	}
 	
-	this.findMatchingHolds = (active_key_codes,) => {
-		// if no keys are held, check against all "no hold" shortcuts. Otherwise check held keys against shortcuts hold keys
-		return active_key_codes.length == 0 ? SHORTCUT_LIST.filter(x => x.hold.length == 0) : SHORTCUT_LIST.filter(x => {
+	this.findMatchingHolds = (active_key_codes) => {
+		// filter shortcuts based on active held keys
+		return SHORTCUT_LIST.filter(x => {
 			var decoded_held_keys = active_key_codes.map(y => this.decodeTypeCode(y))
-			if (decoded_held_keys.length != x.hold.length) {
-				// if partial match on hold keys, don't pass along to type shortcuts but do preventDefaultAll if enabled
-				if (this.arrMatch(x.hold.slice(0,decoded_held_keys.length),decoded_held_keys) && 'preventDefaultAll' in x) {
+			if (decoded_held_keys.length < x.hold.length) {
+				// if partial match on hold keys, check for preventDefaultOnHoldAll if enabled
+				if (this.arrMatch(x.hold.slice(0,decoded_held_keys.length),decoded_held_keys) && 'preventDefaultOnHoldAll' in x) {
 					this.prevent_default = true
 				}
 				return false
 			}
-			return this.arrMatch(decoded_held_keys,x.hold)
+			// if held keys match shortcut's hold keys, preventDefaultOnHold or preventDefaultOnHoldAll if enabled
+			var held_keys_match = this.arrMatch(decoded_held_keys,x.hold)
+			if (held_keys_match && ('preventDefaultOnHold' in x || 'preventDefaultOnHoldAll' in x)) {
+				this.prevent_default = true
+			}
+			return held_keys_match
 		})
 	}
 	
@@ -98,11 +85,14 @@ var OmniKeys = new function OmniKeysListener() {
 		// held keys
 		var active_key_codes = Object.keys(this.active_keys)
 		
+		// convert current key to decoded key
+		var type_code = this.decodeTypeCode(e.code)
+		
 		// get shortcuts matching held keys
 		var matched_by_hold = this.findMatchingHolds(active_key_codes)
 		
-		// convert current key to decoded key
-		var type_code = this.decodeTypeCode(e.code)
+		// predict if current key will prevent defaults on hold by adding it to hold match check but not setting the return value for checking against shortcuts
+		this.findMatchingHolds(active_key_codes.concat(e.code))
 		
 		// if key is held, do not add to type queue
 		// if key is not held and type queue is empty, set to current key
@@ -114,7 +104,7 @@ var OmniKeys = new function OmniKeysListener() {
 				: this.type_queue.concat(type_code)
 				
 		// detect key muddling
-		// if keys are held, but no hold matches are found and type_queue has more than 1 value
+		// if key(s) are held, but no hold matches are found and type_queue has more than 1 value
 		if (active_key_codes.length > 0 && matched_by_hold.length == 0 && this.type_queue.length > 1) {
 			// check to see if the previous type_queue value insert was muddled and stored in hold
 			var held_key_location = active_key_codes.map(x => this.decodeTypeCode(x)).findIndex((x) => x == this.type_queue.at(-2))
@@ -133,6 +123,8 @@ var OmniKeys = new function OmniKeysListener() {
 		var is_valid_shortcut = matched_by_hold.filter((x,i) => {
 			// if type queue matches a type shortcut
 			if (this.arrMatch(x.shortcut,this.type_queue)) {
+				// reset any default prevention from hold key method
+				this.prevent_default = false
 				// if allowed during input, call function now
 				if ('allowDuringInput' in x) {
 					x.action()
@@ -140,7 +132,9 @@ var OmniKeys = new function OmniKeysListener() {
 					// otherwise add to shortcut holder to be removed if input event fires
 					this.hold_shortcut = setTimeout(x.action,0)
 				}
-				if ('preventDefault' in x || 'preventDefaultAll' in x) { this.prevent_default = true }
+				if ('preventDefault' in x || 'preventDefaultAll' in x) {
+					this.prevent_default = true
+				}
 				// remove matched shortcut from valid shortcut check
 				return false
 			}
