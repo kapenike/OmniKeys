@@ -1,5 +1,5 @@
 # OmniKeys
-Create shortcuts with any key combination possible. Prevent default events under condition, or stop shortcuts from running when `keydown` affects the DOM
+Create shortcuts with any key combination possible. Prevent default events under condition, or stop shortcuts from running when `keydown` inputs text to the DOM.
 
 ## Setup
 Include `main.js` in your project
@@ -138,8 +138,8 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 		shortcut: Array.from('/save'),
 		action: function () { console.log('User typed /save in a field or not') },
 		allowDuringInput: ''
-		}
-`
+	}
+	`
 	
 ## Bugs and ToDos
 Theres a few, but I'm tired. If anyone happens to stumble across this between now and tomorrow ... here's whats up:
