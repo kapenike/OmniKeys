@@ -97,6 +97,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 ## Examples
 
 ##### Hold: Ctrl + Type: s
+
 	`
 	{
 		hold: ['Control'],
@@ -107,6 +108,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	`
 	
 ##### Hold: Ctrl, Shift, f + Type: . ; \
+
 	`
 	{
 		hold: ['Control','Shift','f'],
@@ -117,24 +119,26 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	
 ##### Hold: Ctrl, s + Type: m
 *This requires `preventDefaultAll` to stop default save event from firing while the shortcut isn't complete*
-`
+
+	`
 	{
 		hold: ['Control','s'],
 		shortcut: ['m'],
 		action: function () { console.log('Expand on save command while preventing its default event') },
 		preventDefaultAll: ''
 	}
-`
+	`
 	
 ##### Type: /save
 *This uses `allowDuringInput` to accept the shortcut while the user is typing. If `preventDefaultAll` was used in conjunction, the event would fire but no text would be output to the active DOM element*
-`
+
+	`
 	{
 		hold: [],
 		shortcut: Array.from('/save'),
 		action: function () { console.log('User typed /save in a field or not') },
 		allowDuringInput: ''
-	}
+		}
 `
 	
 ## Bugs and ToDos
