@@ -8,39 +8,43 @@ Create and modify your shortcuts within the `SHORTCUT_LIST` global variable. Cur
 
 If you plan to dynamically load in this script or your shortcuts, I recommend disabling auto initialization by setting the global variable `INIT_BY_DEFAULT` to `false`. You can start or stop your shortcut listener with access to the OmniKeys global object `OmniKeys`
 
-*Start listening for shortcuts with*
+**Start listening for shortcuts with**
+
 	OmniKeys.start()
-**or**
-*Stop listening with*
+	
+*or*
+
+**Stop listening with**
+
 	OmniKeys.stop()
 	
 ## Shortcut Setup
 Shortcuts are defined as an array of objects. These objects currently accept 6 values:
 
-* *hold* **required, but can be empty**
+* **hold** *required, but can be empty*
 	* Key(s) required to be held for the shortcut to fire
-		**Type:** array of strings
-		**Accepts:** unmodified, standard qwerty and special keys  (see more under *Standard QWERTY Input*)
-* *shortcut* **required**
+	* **Type:** array of strings
+	* **Accepts:** unmodified, standard qwerty and special keys  (see more under **Standard QWERTY Input**)
+* **shortcut** *required*
 	* Key(s) typed while the set of `hold` keys are true (a hold key is not required, although shortcut keys are)
-		**Type:** array of strings
-		**Accepts:** unmodified, standard qwerty and special keys
-* *action* **required**
+	* **Type:** array of strings
+	* **Accepts:** unmodified, standard qwerty and special keys
+* **action** *required*
 	* Function to call when shortcut has completed
-		**Type:** JavaScript function
-		**Accepts:** anything accessible from the global scope
+	* **Type:** JavaScript function
+	* **Accepts:** anything accessible from the global scope
 * *preventDefault*
 	* Include to prevent default event on completion of shortcut key combination
-		**Type:** n/a, empty string used
+	* **Type:** n/a, empty string used
 * *preventDefaultAll*
 	* Include to prevent default events while the current key combination is within the valid parimeters of your shortcut. Also prevents default events on completion
-		**Type:** n/a, empty string used
+	* **Type:** n/a, empty string used
 * *allowDuringInput*
 	* Include to allow this shortcut to fire even when its keystrokes affect the DOM
-		**Type:** n/a, empty string used
+	* **Type:** n/a, empty string used
 	
 ## Standard QWERTY Input
-Any unmodified key stroke from your keyboard can be used ``**examples:** a b y ; ] = ` /``. Note that backslash is accepted `\`, but you will need to escape it within your arrays.
+Any unmodified key stroke from your keyboard can be used ``***examples:*** a b y ; ] = ` /``. Note that backslash is accepted `\`, but you will need to escape it within your arrays.
 An acception to this key stroke rule is the number pad, which you can find use cases for below.
 
 Here is a list of all special cases for specifying keys in your shortcuts:
@@ -112,7 +116,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	`
 	
 ##### Hold: Ctrl, s + Type: m
-	**This requires `preventDefaultAll` to stop default save event from firing while the shortcut isn't complete**
+	*This requires `preventDefaultAll` to stop default save event from firing while the shortcut isn't complete*
 	`
 	{
 		hold: ['Control','s'],
@@ -123,7 +127,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	`
 	
 ##### Type: /save
-	**This uses `allowDuringInput` to accept the shortcut while the user is typing. If `preventDefaultAll` was used in conjunction, the event would fire but no text would be output to the active DOM element**
+	*This uses `allowDuringInput` to accept the shortcut while the user is typing. If `preventDefaultAll` was used in conjunction, the event would fire but no text would be output to the active DOM element*
 	`
 	{
 		hold: [],
