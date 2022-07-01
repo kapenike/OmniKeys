@@ -48,12 +48,8 @@ var OmniKeys = new function OmniKeysListener() {
 		a = a.slice()
 		b = b.slice()
 		while (a.length == b.length && a.length > 0) {
-			var check = a.shift()
-			for (var i=0; i<b.length; i++) {
-				if (check == b[i]) {
-					b.splice(i,1)
-					break
-				}
+			if (a.shift() == b[0]) {
+				b.shift()
 			}
 		}
 		return a.length == 0 && b.length == 0
@@ -124,21 +120,21 @@ var OmniKeys = new function OmniKeysListener() {
 			}
 		}
 		
-		// get list of valid type shortcuts from valid held / no hold shortcut list
+		// get list of valid type shortcuts from held shortcut list
 		var valid_shortcuts = matched_by_hold.filter((x,i) => {
 			// if type queue matches a type shortcut
 			if (this.arrMatch(x.shortcut,this.type_queue)) {
 				// if allowed during input, call function now
 				if ('allowDuringInput' in x) {
-					x.action()
+					x.action(e)
 				} else {
 					// otherwise add to shortcut holder to be removed if input event fires
-					this.hold_shortcut = setTimeout(x.action,0)
+					this.hold_shortcut = setTimeout(function (e) { x.action },0)
 				}
 				if ('preventDefault' in x || 'preventDefaultAll' in x) {
 					this.prevent_default = true
 				}
-				// Edge Case: if shortcut completes, disable on hold prevention here
+				// Edge Case: if shortcut completes, disable on hold prevent default
 				this.prevent_default_on_hold = false
 				// remove matched shortcut from valid shortcut check
 				return false
