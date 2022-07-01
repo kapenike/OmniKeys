@@ -1,12 +1,5 @@
-var INIT_BY_DEFAULT = true // start listener for shortcuts when script is loaded
-var SHIFT_LR_SPECIFIC = false // separate left and right shift (requiring ShiftLeft or ShiftRight instead of just Shift)
-var CTRL_LR_SPECIFIC = false // etc
-var ALT_LR_SPECIFIC = false // etc
-
-var SHORTCUT_LIST = []
-
 var OmniKeys = new function OmniKeysListener() {
-	this.hold_shortcut = null
+	this.hold_shortcut = {}
 	this.active_keys = {}
 	this.type_queue = []
 	this.prevent_default = false
@@ -55,6 +48,13 @@ var OmniKeys = new function OmniKeysListener() {
 		return a.length == 0 && b.length == 0
 	}
 	
+	// detect if target element can accept keystrokes
+	this.predictInput = (e) => {
+		return ['INPUT','TEXTAREA'].includes(e?.target.tagName)
+			?	['text','password','date','datetime-local','email'].includes(e.target.type)
+			: e?.isContentEditable
+	}
+	
 	this.findMatchingHolds = (active_key_codes) => {
 		// filter shortcuts based on active held keys
 		return SHORTCUT_LIST.filter(x => {
@@ -72,6 +72,55 @@ var OmniKeys = new function OmniKeysListener() {
 				this.prevent_default_on_hold = true
 			}
 			return held_keys_match
+		})
+	}
+	
+	this.detectKeyMuddling = (active_key_codes,matched_by_hold) => {
+		// if key(s) are held, but no hold matches are found and type_queue has more than 1 value
+		if (active_key_codes.length > 0 && matched_by_hold.length == 0 && this.type_queue.length > 1) {
+			// check to see if the previous type_queue value insert was muddled and stored in hold
+			var held_key_location = active_key_codes.map(x => this.decodeTypeCode(x)).findIndex((x) => x == this.type_queue.at(-2))
+			if (held_key_location > -1) {
+				// if this is true, remove from active held keys and re-grab matching hold shortcuts
+				active_key_codes.splice(held_key_location,1)
+				var temp_matched_by_hold = this.findMatchingHolds(active_key_codes)
+				// if the re-grab provides a matching shortcut by hold, we can assume the user is key muddling
+				if (temp_matched_by_hold.length > 0) {
+					matched_by_hold = temp_matched_by_hold
+				}
+			}
+		}
+		return matched_by_hold
+	}
+	
+	this.findMatchingShortcuts = (matched_by_hold,e) => {
+		return matched_by_hold.filter((x,i) => {
+			// if type queue matches a type shortcut
+			if (this.arrMatch(x.shortcut,this.type_queue)) {
+				// predict if key stroke is within a typeable DOM element
+				if ('predictInput' in x) {
+					var input_prediction = this.predictInput(e)
+					// if input and allowed or required, or not input and not required
+					if ((input_prediction && (x?.on_input == 'allow' || x?.on_input == 'require')) || !input_prediction && x?.on_input != 'require') {
+						x.action(e)
+					}
+				} else {
+					// otherwise add to shortcut holder for post DOM input check
+					// if allow, send null, otherwise send boolean based on if input is required
+					this.hold_shortcut = {
+						run_on_input: x?.on_input == 'allow' ? null : x?.on_input == 'require',
+						action: setTimeout(x.action,0,e)
+					}
+				}
+				if ('preventDefault' in x || 'preventDefaultAll' in x) {
+					this.prevent_default = true
+				}
+				// Edge Case: if shortcut completes, disable on hold prevent default
+				this.prevent_default_on_hold = false
+				// remove matched shortcut from valid shortcut check
+				return false
+			}
+			return this.arrMatch(x.shortcut.slice(0,this.type_queue.length),this.type_queue)
 		})
 	}
 	
@@ -105,42 +154,10 @@ var OmniKeys = new function OmniKeysListener() {
 				: this.type_queue.concat(type_code)
 				
 		// detect key muddling
-		// if key(s) are held, but no hold matches are found and type_queue has more than 1 value
-		if (active_key_codes.length > 0 && matched_by_hold.length == 0 && this.type_queue.length > 1) {
-			// check to see if the previous type_queue value insert was muddled and stored in hold
-			var held_key_location = active_key_codes.map(x => this.decodeTypeCode(x)).findIndex((x) => x == this.type_queue.at(-2))
-			if (held_key_location > -1) {
-				// if this is true, remove from active held keys and re-grab matching hold shortcuts
-				active_key_codes.splice(held_key_location,1)
-				var temp_matched_by_hold = this.findMatchingHolds(active_key_codes)
-				// if the re-grab provides a matching shortcut by hold, we can assume the user is key muddling
-				if (temp_matched_by_hold.length > 0) {
-					matched_by_hold = temp_matched_by_hold
-				}
-			}
-		}
+		matched_by_hold = this.detectKeyMuddling(active_key_codes,matched_by_hold)
 		
 		// get list of valid type shortcuts from held shortcut list
-		var valid_shortcuts = matched_by_hold.filter((x,i) => {
-			// if type queue matches a type shortcut
-			if (this.arrMatch(x.shortcut,this.type_queue)) {
-				// if allowed during input, call function now
-				if ('allowDuringInput' in x) {
-					x.action(e)
-				} else {
-					// otherwise add to shortcut holder to be removed if input event fires
-					this.hold_shortcut = setTimeout(function (e) { x.action },0)
-				}
-				if ('preventDefault' in x || 'preventDefaultAll' in x) {
-					this.prevent_default = true
-				}
-				// Edge Case: if shortcut completes, disable on hold prevent default
-				this.prevent_default_on_hold = false
-				// remove matched shortcut from valid shortcut check
-				return false
-			}
-			return this.arrMatch(x.shortcut.slice(0,this.type_queue.length),this.type_queue)
-		})
+		var valid_shortcuts = this.findMatchingShortcuts(matched_by_hold,e)
 		
 		// if no valid shortcuts, reset type queue
 		if (valid_shortcuts.length === 0) {
@@ -170,12 +187,14 @@ var OmniKeys = new function OmniKeysListener() {
 		delete this.active_keys[e.code]
 	}
 	
-	// if holding action for input check, and InputEvent fires, cancel action and set action hold to null
 	this.input = (e) => {
-		if (this.hold_shortcut && e.constructor.name == 'InputEvent') {
-			clearTimeout(this.hold_shortcut)
-			this.hold_shortcut = null
+		// if run_on_input is: null - allow to run regardless, true - run if is input, false - run if is not input
+		if (this.hold_shortcut.run_on_input !== null) {
+			if (e.constructor.name == 'InputEvent' && !this.hold_shortcut.run_on_input) {
+				clearTimeout(this.hold_shortcut.run_on_input)
+			}
 		}
+		this.hold_shortcut = {}
 	}
 	
 	// if window loses focus, stop listening for shortcuts and reset held keys and type queue
