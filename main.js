@@ -9,6 +9,8 @@ var OmniKeys = new function OmniKeysListener() {
 	this.hold_shortcut = null
 	this.active_keys = {}
 	this.type_queue = []
+	this.prevent_default = false
+	this.prevent_default_on_hold = false
 	
 	// cases for a more user friendly shortcut input
 	this.decodeTypeCode = (x) => {
@@ -64,23 +66,26 @@ var OmniKeys = new function OmniKeysListener() {
 			if (decoded_held_keys.length < x.hold.length) {
 				// if partial match on hold keys, check for preventDefaultOnHoldAll if enabled
 				if (this.arrMatch(x.hold.slice(0,decoded_held_keys.length),decoded_held_keys) && 'preventDefaultOnHoldAll' in x) {
-					this.prevent_default = true
+					this.prevent_default_on_hold = true
 				}
 				return false
 			}
 			// if held keys match shortcut's hold keys, preventDefaultOnHold or preventDefaultOnHoldAll if enabled
 			var held_keys_match = this.arrMatch(decoded_held_keys,x.hold)
 			if (held_keys_match && ('preventDefaultOnHold' in x || 'preventDefaultOnHoldAll' in x)) {
-				this.prevent_default = true
+				this.prevent_default_on_hold = true
 			}
 			return held_keys_match
 		})
 	}
 	
-	this.prevent_default = false
+	this.resetPreventDefault = () => {
+		this.prevent_default = false
+		this.prevent_default_on_hold = false
+	}
 	
 	this.keyDown = (e) => {
-		this.prevent_default = false
+		this.resetPreventDefault()
 		
 		// held keys
 		var active_key_codes = Object.keys(this.active_keys)
@@ -91,7 +96,7 @@ var OmniKeys = new function OmniKeysListener() {
 		// get shortcuts matching held keys
 		var matched_by_hold = this.findMatchingHolds(active_key_codes)
 		
-		// predict if current key will prevent defaults on hold by adding it to hold match check but not setting the return value for checking against shortcuts
+		// predict if current key will prevent defaults on hold by adding it to hold match check; but not setting the return value for checking against shortcuts
 		this.findMatchingHolds(active_key_codes.concat(e.code))
 		
 		// if key is held, do not add to type queue
@@ -120,11 +125,9 @@ var OmniKeys = new function OmniKeysListener() {
 		}
 		
 		// get list of valid type shortcuts from valid held / no hold shortcut list
-		var is_valid_shortcut = matched_by_hold.filter((x,i) => {
+		var valid_shortcuts = matched_by_hold.filter((x,i) => {
 			// if type queue matches a type shortcut
 			if (this.arrMatch(x.shortcut,this.type_queue)) {
-				// reset any default prevention from hold key method
-				this.prevent_default = false
 				// if allowed during input, call function now
 				if ('allowDuringInput' in x) {
 					x.action()
@@ -135,6 +138,8 @@ var OmniKeys = new function OmniKeysListener() {
 				if ('preventDefault' in x || 'preventDefaultAll' in x) {
 					this.prevent_default = true
 				}
+				// Edge Case: if shortcut completes, disable on hold prevention here
+				this.prevent_default_on_hold = false
 				// remove matched shortcut from valid shortcut check
 				return false
 			}
@@ -142,17 +147,24 @@ var OmniKeys = new function OmniKeysListener() {
 		})
 		
 		// if no valid shortcuts, reset type queue
-		if (is_valid_shortcut.length === 0) {
+		if (valid_shortcuts.length === 0) {
 			this.type_queue = []
-		} else if (is_valid_shortcut.some(x => 'preventDefaultAll' in x)) {
+		} else if (valid_shortcuts.some(x => 'preventDefaultAll' in x)) {
 			// otherwise check if any current valid shortcuts have preventDefaultAll
 			this.prevent_default = true
 		}
 		
-		// add current key to active held keys
-		this.active_keys[e.code] = true
+		// if current key isn't yet held
+		if (typeof this.active_keys[e.code] === 'undefined') {
+			// if type shortcut default isn't prevented and valid shortcuts are available, disable on hold prevention for this key stroke
+			if (!this.prevent_default && valid_shortcuts.length > 0) {
+				this.prevent_default_on_hold = false
+			}
+			// add current key to active held keys
+			this.active_keys[e.code] = true
+		}
 		
-		if (this.prevent_default) {
+		if (this.prevent_default || this.prevent_default_on_hold) {
 			e.preventDefault()
 		}
 	}
