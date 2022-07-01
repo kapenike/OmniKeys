@@ -1,12 +1,12 @@
 # OmniKeys
-Create JavaScript keyboard shortcuts or detect keystroke chains with any key combination possible. Choose when a specific shortcut will prevent its default action and stop when the keyboard input will affect the DOM.
+Create JavaScript keyboard shortcuts or detect keystroke chains with any key combination possible. Prevent default events under condition, or stop shortcuts from running when `keydown` inputs text to the DOM.
 
 ## Setup
 Include `main.js` in your project
 
 Create and modify your shortcuts within the `SHORTCUT_LIST` global variable. Currently stashed in the head of `main.js`
 
-If you plan to dynamically load this script or shortcuts, I recommend disabling auto initialization by setting the global variable `INIT_BY_DEFAULT` to `false`. You can start or stop your shortcut listener with access to the OmniKeys global object `OmniKeys`
+If you plan to dynamically load in this script or your shortcuts, I recommend disabling auto initialization by setting the global variable `INIT_BY_DEFAULT` to `false`. You can start or stop your shortcut listener with access to the OmniKeys global object `OmniKeys`
 
 **Start listening for shortcuts with**
 
@@ -32,7 +32,7 @@ Shortcuts are defined as an array of objects. These objects currently accept 9 v
 * **action** *required*
 	* Function to call when shortcut has completed
 	* **Type:** JavaScript function
-	* **Accepts:** anything accessible from the global scope
+	* **Accepts:** anything accessible from the global scope, the `Event` called at the final shortcut keystroke is passed to `action`
 * *preventDefault*
 	* Include to prevent default event on completion of shortcut key combination
 	* **Type:** n/a, empty string used
@@ -118,7 +118,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	`
 	
 #### Ctrl, s + hey
-*If user holds control and s, and types "hey", prevents default save / history action*
+*If user holds control and s, then types "hey", prevents default save action*
 
 	`
 	{
@@ -132,7 +132,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 *Note: this shortcut requires all type shortcut defaults to be prevented (`preventDefaultAll`) as allowing the continuation of Ctrl + h to the DOM would open your history tab. Ctrl + s is disabled with `preventDefaultOnHold`*
 	
 #### Shift, a, z + hey
-*If user holds Shift, a and z, and types "hey", the "hey" will continue to the DOM and shortcut will run*
+*If user holds Shift, a and z, then types "hey", the "hey" will continue to the DOM and shortcut will run*
 
 	`
 	{
