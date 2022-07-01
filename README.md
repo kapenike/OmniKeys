@@ -45,10 +45,13 @@ Shortcuts are defined as an array of objects. These objects currently accept 9 v
 * *preventDefaultOnHoldAll*
 	* Include to prevent default events while the current held key combination is within the valid shortcut hold key parameters. Also prevents default events on completion
 	* **Type:** n/a, empty string used
-* *allowDuringInput*
-	* Include to allow this shortcut to fire even when its keystrokes affect the DOM
+* *predictInput*
+	* Include to allow this shortcut to predict if the `input` event will fire. This overrides the default behavior of waiting for the DOM to confirm that an `input` event has fired
 	* **Type:** n/a, empty string used
-* *requireDuringInput* (coming soon)
+* *on_input*
+	* Specify if a shortcut is allowed or required to run while user's keystroke is being input to the DOM. Default behavior is to 'not allow'.
+	* **Type:** string
+	* **Accepts:** `allow` or `require`
 	
 ## Standard Keyboard Input
 Any unmodified key stroke from your keyboard can be used ***examples:*** `a` `b` `y` `;` `]` `=` `` ` `` `/`. Note that backslash is accepted `\`, but you will need to escape it within your arrays.
@@ -118,7 +121,7 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	`
 	
 #### Ctrl, s + hey
-*If user holds control and s, then types "hey", prevents default save action*
+*If user holds control and s, then types "hey", prevents default save / history action*
 
 	`
 	{
@@ -140,30 +143,45 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 		shortcut: Array.from('hey'),
 		action: function () { console.log('Prevent Shift + a + z from being sent to the DOM, allow "hey" to be typed and then fire') },
 		preventDefaultOnHoldAll:'',
-		allowDuringInput:''
+		on_input: 'allow'
 	}
 	`
-*Note: `preventDefaultOnHoldAll` is required to prevent a and z from being sent to the DOM. "hey" is sent to the DOM as there are is no `preventDefault(All)` option. However, this shortcut would be cancelled if activated while able to type in the DOM if we didn't have `allowDuringInput` included.*
+*Note: `preventDefaultOnHoldAll` is required to prevent a and z from being sent to the DOM. "hey" is sent to the DOM as there are is no `preventDefault(All)` option. However, this shortcut would be cancelled if activated while able to type in the DOM if we didn't have `on_input: 'allow'` included.*
 	
 #### Type: "/save", then "more"
-*This captures when the user types `/save` or `/savemore` (inclusive). This represents the ability to stack shortcuts*
+*This captures when the user types `/save` into an input or `/savemore` anywhere (inclusive). This represents the ability to stack shortcuts*
 
 	`
 	{
 		hold: [],
 		shortcut: Array.from('/save'),
-		action: function () { console.log('User typed "/save"') },
-		allowDuringInput: ''
+		action: function () { console.log('User typed "/save" into an input') },
+		on_input: 'require'
 	},
 	{
 		hold: [],
 		shortcut: Array.from('/savemore'),
-		action: function () { console.log('User followed that up with "more"') },
-		allowDuringInput: ''
+		action: function () { console.log('User followed that up with "more", typed anywhere') },
+		on_input: 'allow'
+	}
+	`
+	
+#### predictInput vs Default Behavior
+*This captures Ctrl + d, the Chrome default command for creating a shortcut. Using `predictInput`, we can have one shortcut run before the default action, and the other run after (default behavior)
+
+	`
+	{
+		hold: ['Control'],
+		shortcut: ['d'],
+		action: function (e) { console.log('shortcut runs after default action') }
+	},
+	{
+		hold: ['Control'],
+		shortcut: ['d'],
+		action: function (e) { console.log('shortcut runs before default action') },
+		predictInput: ''
 	}
 	`
 	
 ## ToDos
-1. (ToDo) Add `predictInput` feature. Detect if event target is a DOM input. This would allow a shortcut like `Ctrl + s` that doesn't have its default event stopped to run its shortcut code before the default action occurs. Currently the default is to run directly after the following DOM update, so the shortcut code will run after the default action.
-2. (ToDo) Add ability to restrict shortcut to only while users input is changing the DOM.
-3. (ToDo) Create example application
+1. (ToDo) Create example application
