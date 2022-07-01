@@ -1,12 +1,12 @@
 # OmniKeys
-Create JavaScript keyboard shortcuts with any key combination possible. Prevent default events under condition, or stop shortcuts from running when `keydown` inputs text to the DOM.
+Create JavaScript keyboard shortcuts or detect keystroke chains with any key combination possible. Choose when a specific shortcut will prevent its default action and stop when the keyboard input will affect the DOM.
 
 ## Setup
 Include `main.js` in your project
 
 Create and modify your shortcuts within the `SHORTCUT_LIST` global variable. Currently stashed in the head of `main.js`
 
-If you plan to dynamically load in this script or your shortcuts, I recommend disabling auto initialization by setting the global variable `INIT_BY_DEFAULT` to `false`. You can start or stop your shortcut listener with access to the OmniKeys global object `OmniKeys`
+If you plan to dynamically load this script or shortcuts, I recommend disabling auto initialization by setting the global variable `INIT_BY_DEFAULT` to `false`. You can start or stop your shortcut listener with access to the OmniKeys global object `OmniKeys`
 
 **Start listening for shortcuts with**
 
@@ -19,7 +19,7 @@ If you plan to dynamically load in this script or your shortcuts, I recommend di
 	OmniKeys.stop()
 	
 ## Shortcut Setup
-Shortcuts are defined as an array of objects. These objects currently accept 6 values:
+Shortcuts are defined as an array of objects. These objects currently accept 9 values:
 
 * **hold** *required, but can be empty*
 	* Key(s) required to be held for the shortcut to fire
@@ -37,11 +37,18 @@ Shortcuts are defined as an array of objects. These objects currently accept 6 v
 	* Include to prevent default event on completion of shortcut key combination
 	* **Type:** n/a, empty string used
 * *preventDefaultAll*
-	* Include to prevent default events while the current key combination is within the valid parimeters of your shortcut. Also prevents default events on completion
+	* Include to prevent default events while the current key combination is within the valid parameters of your shortcut. Also prevents default events on completion (this does not include key combinations that are only matched at a hold key level)
+	* **Type:** n/a, empty string used
+* *preventDefaultOnHold*
+	* Include to prevent default event on completion of shortcut hold key combination
+	* **Type:** n/a, empty string used
+* *preventDefaultOnHoldAll*
+	* Include to prevent default events while the current held key combination is within the valid shortcut hold key parameters. Also prevents default events on completion
 	* **Type:** n/a, empty string used
 * *allowDuringInput*
 	* Include to allow this shortcut to fire even when its keystrokes affect the DOM
 	* **Type:** n/a, empty string used
+* *requireDuringInput* (coming soon)
 	
 ## Standard Keyboard Input
 Any unmodified key stroke from your keyboard can be used ***examples:*** `a` `b` `y` `;` `]` `=` `` ` `` `/`. Note that backslash is accepted `\`, but you will need to escape it within your arrays.
@@ -98,7 +105,8 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	 
 ## Examples
 
-##### Hold: Ctrl + Type: s
+#### Ctrl + s
+*If user holds control and presses "s" key, prevents default action*
 
 	`
 	{
@@ -109,43 +117,53 @@ Here is a list of all special cases for specifying keys in your shortcuts:
 	}
 	`
 	
-##### Hold: Ctrl, Shift, f + Type: . ; \
-
-	`
-	{
-		hold: ['Control','Shift','f'],
-		shortcut: ['.',';','\\',],
-		action: function () { console.log('I hope this isn\'t one of your shortcuts') }
-	}
-	`
-	
-##### Hold: Ctrl, s + Type: m
-*This requires `preventDefaultAll` to stop default save event from firing while the shortcut isn't complete*
+#### Ctrl, s + hey
+*If user holds control and s, and types "hey", prevents default save / history action*
 
 	`
 	{
 		hold: ['Control','s'],
-		shortcut: ['m'],
-		action: function () { console.log('Expand on save command while preventing its default event') },
-		preventDefaultAll: ''
+		shortcut: Array.from('hey'),
+		action: function () { console.log('disable Ctrl + s default, but allow "hey" to be typed and then fire') },
+		preventDefaultOnHold:'',
+		preventDefaultAll:''
 	}
 	`
+*Note: this shortcut requires all type shortcut defaults to be prevented (`preventDefaultAll`) as allowing the continuation of Ctrl + h to the DOM would open your history tab. Ctrl + s is disabled with `preventDefaultOnHold`*
 	
-##### Type: /save
-*This uses `allowDuringInput` to accept the shortcut while the user is typing. If `preventDefaultAll` was used in conjunction, the event would fire but no text would be output to the active DOM element. Using `preventDefault` would only prevent the final character "e" from being input to the DOM element.*
+#### Shift, a, z + hey
+*If user holds Shift, a and z, and types "hey", the "hey" will continue to the DOM and shortcut will run*
+
+	`
+	{
+		hold: ['Shift','a','z'],
+		shortcut: Array.from('hey'),
+		action: function () { console.log('Prevent Shift + a + z from being sent to the DOM, allow "hey" to be typed and then fire') },
+		preventDefaultOnHoldAll:'',
+		allowDuringInput:''
+	}
+	`
+*Note: `preventDefaultOnHoldAll` is required to prevent a and z from being sent to the DOM. "hey" is sent to the DOM as there are is no `preventDefault(All)` option. However, this shortcut would be cancelled if activated while able to type in the DOM if we didn't have `allowDuringInput` included.*
+	
+#### Type: "/save", then "more"
+*This captures when the user types `/save` or `/savemore` (inclusive). This represents the ability to stack shortcuts*
 
 	`
 	{
 		hold: [],
 		shortcut: Array.from('/save'),
-		action: function () { console.log('User typed /save in a field or not') },
+		action: function () { console.log('User typed "/save"') },
+		allowDuringInput: ''
+	},
+	{
+		hold: [],
+		shortcut: Array.from('/savemore'),
+		action: function () { console.log('User followed that up with "more"') },
 		allowDuringInput: ''
 	}
 	`
 	
-## Bugs and ToDos
-Theres a few, but I'm tired. If anyone happens to stumble across this between now and tomorrow ... here's whats up:
-1. (Bug ... sorta) Type keys are converted to hold keys after the keydown event and removed when the keyup is fired. This all works great for hold keys but can bring an issue to the user when typing fast. When typing fast there is some overlap where two of these type keys are in keydown state at the same time. This creates a mismatch to the shortcut you're going for. Find some elegant way to detect when this occurs and keep type keys in the type queue ... this can't be done with `setTimout` or the script will lose access to its most valuable feature.
-2. (ToDo) Add `predictInput` feature. Detect if event target is a DOM input. This would allow a shortcut like `Ctrl + s` that doesn't have its default event stopped to run its shortcut code before the default action occurs. Currently the default is to run directly after the following DOM update, so the shortcut code will run after the default action.
-3. (ToDo) Add ability to restrict shortcut to only while users input is changing the DOM.
-4. (ToDo) So much more
+## ToDos
+1. (ToDo) Add `predictInput` feature. Detect if event target is a DOM input. This would allow a shortcut like `Ctrl + s` that doesn't have its default event stopped to run its shortcut code before the default action occurs. Currently the default is to run directly after the following DOM update, so the shortcut code will run after the default action.
+2. (ToDo) Add ability to restrict shortcut to only while users input is changing the DOM.
+3. (ToDo) Create example application
