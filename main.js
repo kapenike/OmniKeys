@@ -1,3 +1,10 @@
+var INIT_BY_DEFAULT = true // start listening for shortcuts when script is loaded
+var SHIFT_LR_SPECIFIC = false // separate left and right shift (requiring ShiftLeft or ShiftRight instead of just Shift)
+var CTRL_LR_SPECIFIC = false // etc
+var ALT_LR_SPECIFIC = false // etc
+
+var SHORTCUT_LIST = []
+
 var OmniKeys = new function OmniKeysListener() {
 	this.hold_shortcut = {}
 	this.active_keys = {}
